@@ -1,0 +1,6 @@
+Invoking command in '/home/martinx3/ECE_484/mp1/build/mp1': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake /home/martinx3/ECE_484/mp1 -DCMAKE_INSTALL_PREFIX=/home/martinx3/ECE_484/mp1/install/mp1
+Invoked command in '/home/martinx3/ECE_484/mp1/build/mp1' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake /home/martinx3/ECE_484/mp1 -DCMAKE_INSTALL_PREFIX=/home/martinx3/ECE_484/mp1/install/mp1
+Invoking command in '/home/martinx3/ECE_484/mp1/build/mp1': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/martinx3/ECE_484/mp1/build/mp1 -- -j12 -l12
+Invoked command in '/home/martinx3/ECE_484/mp1/build/mp1' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/martinx3/ECE_484/mp1/build/mp1 -- -j12 -l12
+Invoking command in '/home/martinx3/ECE_484/mp1/build/mp1': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/martinx3/ECE_484/mp1/build/mp1
+Invoked command in '/home/martinx3/ECE_484/mp1/build/mp1' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/martinx3/ECE_484/mp1/build/mp1
