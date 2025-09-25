@@ -9,6 +9,7 @@ import wandb
 import torch
 import numpy as np
 import torch.nn.functional as F
+import torch.nn as nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from models.simple_enet import SimpleENet
@@ -18,7 +19,7 @@ from datasets.simple_lane_dataset import SimpleLaneDataset
 # Configurations
 ##### YOUR CODE STARTS HERE #####
 BATCH_SIZE = 10
-LR = 0.05
+LR = 0.005
 EPOCHS = 1
 ##### YOUR CODE ENDS HERE #####
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -74,7 +75,8 @@ def train():
     # Model and optimizer initialization
     model = SimpleENet(num_classes=2).to(DEVICE)
     ##### YOUR CODE STARTS HERE #####
-   
+    optimizer = Adam(model.parameters(), lr=LR)
+    loss_function = nn.CrossEntropyLoss()
     ##### YOUR CODE ENDS HERE #####
     
 
@@ -111,13 +113,16 @@ def train():
             ##### YOUR CODE STARTS HERE #####
 
             # Move data to device
-          
+            images = images.to(DEVICE)
+            segmentation_labels = segmentation_labels.to(DEVICE)
             # Forward pass
-             
+            outputs = model(images)
             # Compute loss
-          
+            loss = loss_function(outputs, segmentation_labels)
             # Backward pass and optimize
-   
+            optimizer.zero_grad()   
+            loss.backward()
+            optimizer.step()
             ##### YOUR CODE ENDS HERE #####
             
 

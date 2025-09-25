@@ -6,9 +6,9 @@ class InitialBlock(nn.Module):
         super().__init__()
 
         if relu:
-            activation = nn.ReLU
+            activation = nn.ReLU()
         else:
-            activation = nn.PReLU
+            activation = nn.PReLU()
 
         """
         Build the InitialBlock with correct configuration
@@ -20,12 +20,21 @@ class InitialBlock(nn.Module):
             4. Concatenate $f_1$ and $f_2$ along the second dimension (axis=1)--> Batch Norm --> Activation --> Output with the shape of (out_channels, 192, 320)
         """
         ##### YOUR CODE STARTS HERE #####
-        
+        self.conv = nn.Conv2d(in_channels, out_channels-1, kernel_size=3, stride=2, padding=1, bias=bias)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.bnorm = nn.BatchNorm2d(out_channels)
+        self.activation = activation
         ##### YOUR CODE ENDS HERE #####
         
     def forward(self, x):
         ##### YOUR CODE STARTS HERE #####
-        
+        x_conv = self.conv(x)
+        x_pool = self.pool(x)
+        x_concat = torch.cat((x_conv, x_pool), dim=1)
+        output = self.bnorm(x_concat)
+        output = self.activation(output)
+        print(output.shape)
+        return output
         ##### YOUR CODE ENDS HERE #####
 
 class RegularBottleneck(nn.Module):

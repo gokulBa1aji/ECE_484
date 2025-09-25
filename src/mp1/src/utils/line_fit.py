@@ -100,6 +100,7 @@ def line_fit(binary_warped):
 
 	####
 	except TypeError:
+		print("Left fit ", type(lefty), type(leftx))
 		print("Unable to detect lanes")
 		return None
 

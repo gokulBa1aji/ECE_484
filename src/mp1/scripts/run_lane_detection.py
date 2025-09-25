@@ -7,6 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 import torch
 import json
 import numpy as np
+import cv2
 
 import rclpy
 from rclpy.node import Node
@@ -23,9 +24,8 @@ from utils.util import perspective_transform, quaternion_to_euler
 from utils.line_fit import line_fit, tune_fit, bird_fit, final_viz
 from utils.ground_truth_generator import GroundTruthGenerator
 
-
 class LaneVisualizer(Node):
-    def __init__(self, ckpt_fn: str):
+    def __init__(self, ckpt_fn: str, debug: bool=False):
         super().__init__('lane_visualizer')
 
         self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'        
@@ -100,7 +100,7 @@ class LaneVisualizer(Node):
             # Convert a ROS image message into an OpenCV image
             cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
             self.raw_img = cv_image.copy()
-            print(self.raw_img.shape)
+            print("Raw image shape: ",self.raw_img.shape)
         except CvBridgeError as e:
             self.get_logger().error(f"CV Bridge error: {e}")
 
@@ -124,6 +124,7 @@ class LaneVisualizer(Node):
             mask = self.get_segmentation_mask(self.raw_img)
             combine_fit_img, bird_fit_img, ret = self.fit_poly_lanes(mask)
             if self.detected and ret is not None:
+                print("Entered Publisher")
                 self.final_pub.publish(self.bridge.cv2_to_imgmsg(combine_fit_img, '8UC3'))
                 center_poly = (np.add(ret["left_fit"], ret["right_fit"]) / 2).tolist()
                 poly_msg = Float32MultiArray()
@@ -157,7 +158,11 @@ class LaneVisualizer(Node):
         img_normalized = None
 
         ##### Your code starts here #####
-        
+        print("Image Type: ", type(img))
+        print("Image Shape: ", img.shape)
+        img_resized = cv2.resize(img, (640, 384), interpolation=cv2.INTER_NEAREST)
+        img_grayscale = cv2.cvtColor(img_resized, cv2.COLOR_BGR2GRAY)
+        img_normalized = img_grayscale.astype(np.float32) / 255.0
         ##### Your code ends here #####
 
         # Step 3: Convert to tensor and add channel/batch dimension
@@ -171,7 +176,7 @@ class LaneVisualizer(Node):
         binary_output = pred_mask.squeeze().cpu().numpy().astype(np.uint8) * 255
 
         ##### Your code starts here #####
-
+        binary_output = cv2.resize(binary_output, (img.shape[0], img.shape[1]), interpolation=cv2.INTER_NEAREST)
         ##### Your code ends here #####
 
         return binary_output
@@ -179,6 +184,7 @@ class LaneVisualizer(Node):
     def fit_poly_lanes(self, binary_img):
         binary_warped, M, Minv = perspective_transform(binary_img, np.float32(self.bev_config["src"]))
         if not self.hist:
+            print("Binary Warp: ", binary_warped.shape)
             # Fit lane without previous result
             ret = line_fit(binary_warped)
             if ret is None:
@@ -229,7 +235,7 @@ def main(args=None):
     # Default checkpoint path - should be updated based on actual path
     default_ckpt = os.path.join(
         os.path.dirname(__file__), 
-        '..', 'checkpoints', 'simple_enet_checkpoint_epoch_40.pth'
+        '..', 'checkpoints', 'simple_enet_checkpoint_epoch_1.pth'
     )
     
     try:

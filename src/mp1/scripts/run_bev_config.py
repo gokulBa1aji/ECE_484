@@ -41,9 +41,13 @@ def main():
     src = []
     for pt in bev_world_coords:
         ##### YOUR CODE STARTS HERE #####
-
+        X_camera = R @ pt.reshape(3,1) + t.reshape(3,1)
+        x_img = K @ X_camera
+        print("X_Image: ", x_img)
+        u = x_img[0, 0] / x_img[2, 0]
+        v = x_img[1, 0] / x_img[2, 0]
+        src.append((u,v))
         ##### YOUR CODE ENDS HERE #####
-        pass
     src = np.float32(src)
 
     output = {
