@@ -176,7 +176,7 @@ class LaneVisualizer(Node):
         binary_output = pred_mask.squeeze().cpu().numpy().astype(np.uint8) * 255
 
         ##### Your code starts here #####
-        binary_output = cv2.resize(binary_output, (img.shape[0], img.shape[1]), interpolation=cv2.INTER_NEAREST)
+        binary_output = cv2.resize(binary_output, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
         ##### Your code ends here #####
 
         return binary_output
@@ -235,7 +235,7 @@ def main(args=None):
     # Default checkpoint path - should be updated based on actual path
     default_ckpt = os.path.join(
         os.path.dirname(__file__), 
-        '..', 'checkpoints', 'simple_enet_checkpoint_epoch_1.pth'
+        '..', 'checkpoints', 'simple_enet_checkpoint_epoch_20.pth'
     )
     
     try:

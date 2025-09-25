@@ -18,9 +18,9 @@ from datasets.simple_lane_dataset import SimpleLaneDataset
 
 # Configurations
 ##### YOUR CODE STARTS HERE #####
-BATCH_SIZE = 10
-LR = 0.005
-EPOCHS = 1
+BATCH_SIZE = 5
+LR = 0.0005
+EPOCHS = 20
 ##### YOUR CODE ENDS HERE #####
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 DATASET_PATH = "data/dataset"

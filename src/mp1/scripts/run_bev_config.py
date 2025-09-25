@@ -41,12 +41,49 @@ def main():
     src = []
     for pt in bev_world_coords:
         ##### YOUR CODE STARTS HERE #####
-        X_camera = R @ pt.reshape(3,1) + t.reshape(3,1)
+
+        X_camera = R @ (pt.reshape(3,1) - t.reshape(3,1))
         x_img = K @ X_camera
         print("X_Image: ", x_img)
         u = x_img[0, 0] / x_img[2, 0]
         v = x_img[1, 0] / x_img[2, 0]
         src.append((u,v))
+
+
+        # print("R1: ", R)
+        # R_adjusted = np.block([
+        #     [R, np.array([t]).T],
+        #     [np.zeros((1, 3)), np.ones((1, 1))]
+        # ])
+
+        # pt_adjusted = np.vstack([pt.reshape(3, 1), [[1]]])
+
+        # print("pt adjusted: ", pt_adjusted)
+
+        # X_camera = R_adjusted @ pt_adjusted
+        # print("X_camera: ", X_camera)
+
+        # zeros_col = np.zeros((3, 1))
+
+        # print("np.hstack: ", np.hstack((K, zeros_col)))
+
+        # x_img = np.hstack((K, zeros_col)) @ X_camera
+
+        # x_img = x_img / x_img[2, 0]
+
+        # print("X_Image: ", x_img)
+        # u = x_img[0] * unit_conversion_factor[1]
+        # v = x_img[1] * unit_conversion_factor[0]
+
+        # u = 476.7030836014194 * X_camera[0, 0] / X_camera[2, 0] + 400.5
+        # v = 476.7030836014194 * X_camera[1, 0] / X_camera[2, 0] + 300.5
+
+        # print("u, v:", u, v)
+
+        # src.append((u,v))
+
+
+
         ##### YOUR CODE ENDS HERE #####
     src = np.float32(src)
 
