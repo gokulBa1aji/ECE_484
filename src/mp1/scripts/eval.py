@@ -27,7 +27,7 @@ class ModelEvaluationService(Node):
         
         # Declare parameters
         self.declare_parameter('dataset_path', 
-                              os.path.join(os.path.dirname(os.path.realpath(__file__)), "dataset"))
+                              "/home/martinx3/ECE_484/src/mp1/data/dataset")
         self.declare_parameter('checkpoint_path', "checkpoints/simple_enet_checkpoint_epoch_20.pth")
         self.declare_parameter('batch_size', 10)
         self.declare_parameter('use_wandb', True)
@@ -52,6 +52,7 @@ class ModelEvaluationService(Node):
         Service callback to evaluate the trained SimpleENet model.
         """
         try:
+            print("Trying service evaluate")
             self.get_logger().info('Starting model evaluation...')
             
             # Initialize wandb if enabled
@@ -103,6 +104,7 @@ class ModelEvaluationService(Node):
                     segmentation_labels = segmentation_labels.to(DEVICE)
 
                     # Forward pass
+                    print("forward pass", batch_idx)
                     outputs = model(images)
                     
                     # Compute loss
