@@ -44,8 +44,9 @@ class vehicleController():
         ####################### TODO: Your TASK 1 code starts Here #######################
         pos_x, pos_y, vel, yaw = 0, 0, 0, 0
 
-        pose = currentPose.pose
-        twist = currentPose.twist
+        currentState = currentPose.state
+        pose = currentState.pose
+        twist = currentState.twist
 
         # Get (x, y) from currentPose.pose.position
         pos_x = pose.position.x
@@ -53,6 +54,7 @@ class vehicleController():
 
         # Get yaw from currentPose.pose.orientation
         quaternion_orientation = pose.orientation # [x, y, z, w]
+        print(quaternion_orientation)
         euler_orientation = quaternion_to_euler(quaternion_orientation) # [roll, pitch, yaw]
         yaw = euler_orientation[2]
 
