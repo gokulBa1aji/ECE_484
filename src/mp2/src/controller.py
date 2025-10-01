@@ -35,11 +35,30 @@ class vehicleController():
     #       and https://docs.ros.org/en/ros2_packages/humble/api/gazebo_msgs/msg/EntityState.html
     #       and extract yaw, velocity, vehicle_position_x, vehicle_position_y
     # Hint: you may use the the helper function(quaternion_to_euler()) we provide to convert from quaternion to euler
-     
+    
+    #   currentPose: GetEntityState response, the current state of the vehicle
+    #   currentPose.pose: Point position, Quaternion orientation; representation of pose in free space, composed of position and orientation. 
+    #   currentPose.twist: Vector3 linear, Vector3 angular; expresses velocity in free space broken into its linear and angular parts.
     def extract_vehicle_info(self, currentPose):
 
         ####################### TODO: Your TASK 1 code starts Here #######################
         pos_x, pos_y, vel, yaw = 0, 0, 0, 0
+
+        pose = currentPose.pose
+        twist = currentPose.twist
+
+        # Get (x, y) from currentPose.pose.position
+        pos_x = pose.position.x
+        pos_y = pose.position.y
+
+        # Get yaw from currentPose.pose.orientation
+        quaternion_orientation = pose.orientation # [x, y, z, w]
+        euler_orientation = quaternion_to_euler(quaternion_orientation) # [roll, pitch, yaw]
+        yaw = euler_orientation[2]
+
+        # Get velocity from currentPose.twist; assuming z velocity is 0
+        vel = sqrtf(twist.linear[0] ** 2 + twist.linear[1] ** 2)
+
 
         ####################### TODO: Your Task 1 code ends Here #######################
 
@@ -54,9 +73,26 @@ class vehicleController():
         ####################### TODO: Your TASK 2 code starts Here #######################
         target_velocity = 10
 
+        straight_velocity = 12
+        curve_velocity = 8
+
+        # Based on the current position, we need the following two waypoints
+        # If the two waypoints are in a line with current position, continue straight
+        # Otherwise, slow down
+
+        waypoint1 = future_unreached_waypoints[0]
+        waypoint2 = future_unreached_waypoints[1]
+        
+        delta_y = waypoint2[1] - waypoint1[1] 
+        delta_x = waypoint2[0] - waypoint[0]
+        line_yaw = np.arctan2(delta_y, delta_x)
+
+        yaw_diff = min(abs(line_yaw - curr_yaw), np.pi * 2 - abs(line_yaw - curr_yaw)) # shortest distance between two angles on a circle
+        if yaw_diff < 0.35: # 
+            return straight_velocity
 
         ####################### TODO: Your TASK 2 code ends Here #######################
-        return target_velocity
+        return curve_velocity
 
         
         
@@ -67,6 +103,14 @@ class vehicleController():
         ####################### TODO: Your TASK 3 code starts Here #######################
         target_steering = 0
 
+        lookahead_point = target_point[0] # same as target_point [x, y]
+
+        delta_y = lookahead_point[1] - curr_y
+        delta_x = lookahead_point[0] - curr_x
+        
+        line_yaw = np.arctan2(delta_y, delta_x)
+
+        target_steering = min(abs(line_yaw - curr_yaw), np.pi * 2 - abs(line_yaw - curr_yaw)) # shortest distance between two angles on a circle
         ####################### TODO: Your TASK 3 code starts Here #######################
         return target_steering
        
