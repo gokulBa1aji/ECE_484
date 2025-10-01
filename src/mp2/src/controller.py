@@ -53,13 +53,12 @@ class vehicleController():
         pos_y = pose.position.y
 
         # Get yaw from currentPose.pose.orientation
-        quaternion_orientation = pose.orientation # [x, y, z, w]
-        print(quaternion_orientation)
+        quaternion_orientation = [pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w] # [x, y, z, w]
         euler_orientation = quaternion_to_euler(quaternion_orientation) # [roll, pitch, yaw]
         yaw = euler_orientation[2]
 
         # Get velocity from currentPose.twist; assuming z velocity is 0
-        vel = sqrtf(twist.linear[0] ** 2 + twist.linear[1] ** 2)
+        vel = math.sqrt(twist.linear.x ** 2 + twist.linear.y ** 2)
 
 
         ####################### TODO: Your Task 1 code ends Here #######################
@@ -86,11 +85,11 @@ class vehicleController():
         waypoint2 = future_unreached_waypoints[1]
         
         delta_y = waypoint2[1] - waypoint1[1] 
-        delta_x = waypoint2[0] - waypoint[0]
+        delta_x = waypoint2[0] - waypoint1[0]
         line_yaw = np.arctan2(delta_y, delta_x)
 
         yaw_diff = min(abs(line_yaw - curr_yaw), np.pi * 2 - abs(line_yaw - curr_yaw)) # shortest distance between two angles on a circle
-        if yaw_diff < 0.35: # 
+        if yaw_diff < 0.35: # 20 degrees
             return straight_velocity
 
         ####################### TODO: Your TASK 2 code ends Here #######################
@@ -105,14 +104,21 @@ class vehicleController():
         ####################### TODO: Your TASK 3 code starts Here #######################
         target_steering = 0
 
-        lookahead_point = target_point[0] # same as target_point [x, y]
+        lookahead_point = [target_point[0], target_point[1]] # same as target_point [x, y]
 
         delta_y = lookahead_point[1] - curr_y
         delta_x = lookahead_point[0] - curr_x
-        
-        line_yaw = np.arctan2(delta_y, delta_x)
+        ld = math.sqrt(delta_y ** 2 + delta_x ** 2)
 
-        target_steering = min(abs(line_yaw - curr_yaw), np.pi * 2 - abs(line_yaw - curr_yaw)) # shortest distance between two angles on a circle
+        line_yaw = np.arctan2(delta_y, delta_x)
+        alpha = line_yaw - curr_yaw
+
+        if alpha > np.pi:
+            alpha -= 2 * np.pi
+        elif alpha < -np.pi:
+            alpha += 2 * np.pi
+
+        target_steering = math.atan((2 * self.L * math.sin(alpha)) / ld)
         ####################### TODO: Your TASK 3 code starts Here #######################
         return target_steering
        
