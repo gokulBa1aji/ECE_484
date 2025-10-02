@@ -11,6 +11,8 @@ import math
 import sys
 import os
 
+import logging
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from util import euler_to_quaternion, quaternion_to_euler
@@ -26,7 +28,13 @@ class vehicleController():
         self.controlPub = self.node.create_publisher(AckermannDrive, "/ackermann_cmd", 1)
         self.prev_vel = 0
         self.L = 1.75 
-        self.log_acceleration = False
+        self.log_acceleration = True
+        logging.basicConfig(
+            filename='acceleration.log',  # Name of the log file
+            level=logging.INFO,  # Minimum logging level to capture (e.g., INFO, DEBUG, WARNING, ERROR, CRITICAL)
+            format='%(asctime)s - %(levelname)s - %(message)s',  # Format of the log message
+            filemode='a'  # File mode: 'a' for append (default), 'w' for write (overwrite)
+        )
 
        
 
@@ -74,26 +82,35 @@ class vehicleController():
         ####################### TODO: Your TASK 2 code starts Here #######################
         target_velocity = 10
 
-        straight_velocity = 12
-        curve_velocity = 8
+        straight_velocity = 17
+        curve_velocity = 10
 
         # Based on the current position, we need the following two waypoints
         # If the two waypoints are in a line with current position, continue straight
         # Otherwise, slow down
 
-        waypoint1 = future_unreached_waypoints[0]
-        waypoint2 = future_unreached_waypoints[1]
+        waypoint1 = [curr_x, curr_y]
+        waypoint2 = future_unreached_waypoints[0]
+        
+        if (len(future_unreached_waypoints) > 1):
+            waypoint1 = future_unreached_waypoints[0]
+            waypoint2 = future_unreached_waypoints[1]
         
         delta_y = waypoint2[1] - waypoint1[1] 
         delta_x = waypoint2[0] - waypoint1[0]
         line_yaw = np.arctan2(delta_y, delta_x)
 
         yaw_diff = min(abs(line_yaw - curr_yaw), np.pi * 2 - abs(line_yaw - curr_yaw)) # shortest distance between two angles on a circle
-        if yaw_diff < 0.35: # 20 degrees
-            return straight_velocity
+        
+        temp = (yaw_diff / math.pi) ** 0.5
 
-        ####################### TODO: Your TASK 2 code ends Here #######################
-        return curve_velocity
+        return temp * curve_velocity + (1 - temp) * straight_velocity
+        
+        # if yaw_diff < 0.35: # 20 degrees
+        #     return straight_velocity
+
+        # ####################### TODO: Your TASK 2 code ends Here #######################
+        # return curve_velocity
 
         
         
@@ -104,21 +121,29 @@ class vehicleController():
         ####################### TODO: Your TASK 3 code starts Here #######################
         target_steering = 0
 
-        lookahead_point = [target_point[0], target_point[1]] # same as target_point [x, y]
+        target = target_point
 
-        delta_y = lookahead_point[1] - curr_y
-        delta_x = lookahead_point[0] - curr_x
-        ld = math.sqrt(delta_y ** 2 + delta_x ** 2)
+        # target = future_unreached_waypoints[min(len(future_unreached_waypoints) - 1, 1)]
 
-        line_yaw = np.arctan2(delta_y, delta_x)
-        alpha = line_yaw - curr_yaw
+        delta_y = target[1] - curr_y
+        delta_x = target[0] - curr_x
+        target_dist = math.sqrt(delta_y ** 2 + delta_x ** 2)
+
+        K_dd = 0.35 # untuned
+        ld = K_dd * self.prev_vel
+        ld = np.clip(ld, 3, 10)
+
+        target_angle = math.atan2(delta_y, delta_x)
+        alpha = target_angle - curr_yaw
 
         if alpha > np.pi:
             alpha -= 2 * np.pi
         elif alpha < -np.pi:
             alpha += 2 * np.pi
-
-        target_steering = math.atan((2 * self.L * math.sin(alpha)) / ld)
+        if ld > 0.1:
+            target_steering = math.atan((2 * self.L * math.sin(alpha)) / ld)
+        else:
+            target_steering = 0
         ####################### TODO: Your TASK 3 code starts Here #######################
         return target_steering
        
@@ -135,7 +160,7 @@ class vehicleController():
         #   target_point: [target_x, target_y]
         #   future_unreached_waypoints: a list of future waypoints[[target_x, target_y]]
         # Output: None
-
+        # acc = []
         
         if currentPose is None:
             print("Warning: No current pose data")
@@ -149,6 +174,8 @@ class vehicleController():
 
         if self.log_acceleration:
             acceleration = (curr_vel - self.prev_vel) * 100  # Since we are running at 100Hz
+            # logging.info(round(acceleration, 3))
+            logging.info("(" + str(round(curr_x, 3)) + " " + str(round(curr_y, 3)) + " " + str(round(acceleration, 3)) + ")")
 
         target_velocity = self.longititudal_controller(curr_x, curr_y, curr_vel, curr_yaw, future_unreached_waypoints)
         target_steering = self.pure_pursuit_lateral_controller(curr_x, curr_y, curr_yaw, target_point, future_unreached_waypoints)
