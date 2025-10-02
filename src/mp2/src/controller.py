@@ -202,9 +202,7 @@ class vehicleController():
         elif alpha < -np.pi:
             alpha += 2 * np.pi
 
-        if ld >= 0.1:
-            target_steering = math.atan((2 * self.L * math.sin(alpha)) / ld)
-        else:
-            target_steering = 0
+        target_steering = math.atan((2 * self.L * math.sin(alpha)) / ld)
+
         ####################### TODO: Your TASK 3 code starts Here #######################
         return target_steering
