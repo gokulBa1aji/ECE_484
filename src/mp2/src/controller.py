@@ -176,3 +176,35 @@ class vehicleController():
     def destroy(self):
         if self.own_node:
             self.node.destroy_node()
+
+
+    # Task 3: Lateral Controller (Pure Pursuit)
+    def pure_pursuit_lateral_controller(self, curr_x, curr_y, curr_yaw, target_point, future_unreached_waypoints):
+       
+        ####################### TODO: Your TASK 3 code starts Here #######################
+        target_steering = 0
+
+        delta_y = target_point[1] - curr_y
+        delta_x = target_point[0] - curr_x
+        target_dist = math.sqrt(delta_y ** 2 + delta_x ** 2)
+
+        min_ld = 3
+        max_ld = 10
+
+        K_dd = 0.5 # untuned
+        ld = np.clip(K_dd * self.prev_vel + min_ld, min_ld, max_ld)
+
+        target_angle = math.arctan2(target_point[1], target_point[0])
+        alpha = target_angle - curr_yaw
+
+        if alpha > np.pi:
+            alpha -= 2 * np.pi
+        elif alpha < -np.pi:
+            alpha += 2 * np.pi
+
+        if ld >= 0.1:
+            target_steering = math.atan((2 * self.L * math.sin(alpha)) / ld)
+        else:
+            target_steering = 0
+        ####################### TODO: Your TASK 3 code starts Here #######################
+        return target_steering
