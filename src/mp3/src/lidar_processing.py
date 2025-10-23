@@ -180,21 +180,32 @@ class LidarProcessing:
             #### TODO ####
             # Add the 4 additional sensor directions
             # Hint: look at above code for inspiration
+            
+            filter_front_left = np.logical_and(filter_front, filter_left)
+            indices = np.argwhere(filter_front_left).flatten()
+            
+            self.x_front_left = np.mean(x_points[indices])
+            self.y_front_left = np.mean(y_points[indices])
 
+            filter_front_right = np.logical_and(filter_front, filter_right)
+            indices = np.argwhere(filter_front_right).flatten()
 
-            self.x_front_left = 0
-            self.y_front_left = 0
+            self.x_front_right = np.mean(x_points[indices])
+            self.y_front_right = np.mean(y_points[indices])
 
-            self.x_front_right = 0
-            self.y_front_right = 0
+            filter_rear_left = np.logical_and(filter_rear, filter_left)
+            indices = np.argwhere(filter_rear_left).flatten()
 
-            self.x_rear_left = 0
-            self.y_rear_left = 0
+            self.x_rear_left = np.mean(x_points[indices])
+            self.y_rear_left = np.mean(y_points[indices])
+            
+            filter_rear_right = np.logical_and(filter_rear, filter_right)
+            indices = np.argwhere(filter_rear_right).flatten()
 
-            self.x_rear_right = 0
-            self.y_rear_right = 0
+            self.x_rear_right = np.mean(x_points[indices])
+            self.y_rear_right = np.mean(y_points[indices])
 
-            raise NotImplementedError("extensive lidar not implemented yet in file: lidar_processing.py | class: LidarProcessing | func: construct_birds_eye_view")
+            #raise NotImplementedError("extensive lidar not implemented yet in file: lidar_processing.py | class: LidarProcessing | func: construct_birds_eye_view")
 
 
             #### END ####

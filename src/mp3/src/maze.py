@@ -253,13 +253,48 @@ class Maze:
         # Add the 4 additional sensor directions
         # Hint: look at above code for inspiration
 
-
+        pos_x = x
+        pos_y = y
         front_left = 0
-        front_right = 0
-        rear_left = 0
-        rear_right = 0
+        dx = np.cos(orientation + np.pi/4) * 1 - np.sin(orientation + np.pi/4) * 0
+        dy = np.sin(orientation + np.pi/4) * 1 + np.cos(orientation + np.pi/4) * 0
+        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and rear < sensor_limit:
+            pos_x = pos_x + dx
+            pos_y = pos_y + dy
+            front_left += 1
 
-        raise NotImplementedError("extensive lidar not implemented yet in file: maze.py | class: Maze | func: sensor_model")
+        pos_x = x
+        pos_y = y
+        front_right = 0
+        dx = np.cos(orientation - np.pi/4) * 1 - np.sin(orientation - np.pi/4) * 0
+        dy = np.sin(orientation - np.pi/4) * 1 + np.cos(orientation - np.pi/4) * 0
+        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and rear < sensor_limit:
+            pos_x = pos_x + dx
+            pos_y = pos_y + dy
+            front_right += 1
+
+        pos_x = x
+        pos_y = y
+        rear_left = 0
+        dx = np.cos(orientation + 3 * np.pi/4) * 1 - np.sin(orientation + 3 * np.pi/4) * 0
+        dy = np.sin(orientation + 3 * np.pi/4) * 1 + np.cos(orientation + 3 *np.pi/4) * 0
+        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and rear < sensor_limit:
+            pos_x = pos_x + dx
+            pos_y = pos_y + dy
+            rear_left += 1
+
+
+        pos_x = x
+        pos_y = y
+        rear_right = 0
+        dx = np.cos(orientation- 3 * np.pi/4) * 1 - np.sin(orientation- 3 * np.pi/4) * 0
+        dy = np.sin(orientation- 3 * np.pi/4) * 1 + np.cos(orientation- 3 *np.pi/4) * 0
+        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and rear < sensor_limit:
+            pos_x = pos_x + dx
+            pos_y = pos_y + dy
+            rear_right += 1
+
+        #raise NotImplementedError("extensive lidar not implemented yet in file: maze.py | class: Maze | func: sensor_model")
 
 
         #### END ####
