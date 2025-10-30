@@ -148,7 +148,7 @@ class ParticleFilter:
         for i in range(self.num_particles):
             newWeight = np.random.rand()
             index = np.argmax(newWeight > weight_sum)
-            x, y, heading = self.particles[i].state()
+            x, y, heading = self.particles[i].state
             newParticle = Particle(
                 x,
                 y,
@@ -179,11 +179,12 @@ class ParticleFilter:
         # You can use an ODE function or the vehicle_dynamics function
         # provided at the top of this file.
         for particle in self.particles:
-            particle_info = particle.state()
+            particle_info = particle.state
             v,delta = self.control[-1]
 
             offset = vehicle_dynamics(0, particle_info, v, delta)
-            particle.try_move(self, offset, particle.maze)
+            print(offset)
+            particle.try_move(offset, particle.maze)
 
 
         #raise NotImplementedError("implement this!!!")
@@ -221,9 +222,9 @@ class ParticleFilter:
             # 3. resample particles
             #
             # Hint: use class helper functions
-            particleMotionModel()
-            updateWeight(lidar_reading)
-            resampleParticle()
+            self.particleMotionModel()
+            self.updateWeight(lidar_reading)
+            self.resampleParticle()
             
 
 
