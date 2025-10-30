@@ -148,25 +148,26 @@ class ParticleFilter:
         for i in range(self.num_particles):
             newWeight = np.random.rand()
             index = np.argmax(newWeight > weight_sum)
-            x, y, heading = self.particles[i].state
+            x, y, heading = self.particles[index].state
             newParticle = Particle(
                 x,
                 y,
-                self.particles[i].maze,
+                self.particles[index].maze,
                 heading=heading,
                 weight=1.0 / self.num_particles,
-                sensor_limit=self.particles[i].sensor_limit,
+                sensor_limit=self.particles[index].sensor_limit,
                 noisy=True,
                 gps_x_std=4,
                 gps_y_std=4,
                 gps_heading_std=4,
                 gps_update=0.5
             )
+            newParticle.fix_invalid_particles()
+            new_particles.append(newParticle)
         # raise NotImplementedError("implement this!!!")
 
 
         #### END ####
-
         self.particles = new_particles
 
     def particleMotionModel(self):
@@ -179,13 +180,14 @@ class ParticleFilter:
         # You can use an ODE function or the vehicle_dynamics function
         # provided at the top of this file.
         for particle in self.particles:
-            particle_info = particle.state
-            v,delta = self.control[-1]
+            # v,delta = self.control[-1]
+            for v,delta in self.control:
+                particle_info = particle.state
 
-            offset = vehicle_dynamics(0, particle_info, v, delta)
-            print(offset)
-            particle.try_move(offset, particle.maze)
-
+                offset = vehicle_dynamics(0, particle_info, v, delta)
+                scaledOffset = [val * dt for val in offset]
+                particle.try_move(scaledOffset, particle.maze)
+            particle.fix_invalid_particles()
 
         #raise NotImplementedError("implement this!!!")
     
@@ -193,6 +195,7 @@ class ParticleFilter:
         #### END ####
 
         self.control = []
+
 
     def runFilter(self, show_frequency):
         """
@@ -207,15 +210,19 @@ class ParticleFilter:
             lidar_reading, gps_reading = self.bob.read_sensor()
 
             # ensure at least one positive gps reading before running the filter
+            print("Checking gps")
             if gps_reading is not None:
                 self.gps_reading = gps_reading
             if self.gps_reading is None:
                 continue
 
+            print("GPS found")
+            
             # if no control inputs have arrived, do nothing
             if len(self.control) == 0:
                 continue
 
+            print("Control found")
             #### TODO ####
             # 1. perform a particle motion step
             # 2. update weights based on measurements
