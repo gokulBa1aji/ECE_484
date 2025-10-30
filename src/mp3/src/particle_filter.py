@@ -87,14 +87,41 @@ class ParticleFilter:
         # Make sure that the sum of all particle weights adds up to 1
         # after updating the weights.
 
+        std_dev = 1.0 #needs to be tuned
 
-        raise NotImplementedError("implement this!!!")
+        weights = []
+
+        for particle in self.particles:
+            #get lidar readings - idk how to do this
+            particle_lidar = particle.read_sensor()
+
+            error = np.array(lidar_readings) - np.array(particle_lidar)
+
+            error = np.sum(error * error)
+
+            error = error / (2 * std_dev * std_dev)
+
+            weight = np.exp(-1 * error)
+
+            weights.append(weight)
+           
+        
+        total_weight = sum(weights)
+
+        for w in weights:
+            w = w/total_weight
+
+        for particle,w in zip(self.particles, weights):
+            particle.weight = w
+
 
 
         #### END ####
 
     def resampleParticle(self):
         new_particles = []
+
+        
 
         #### TODO ####
         # Resample current particles to generate a new set of particles.
@@ -111,12 +138,31 @@ class ParticleFilter:
         #       to make sure the particle filter does not converge / stay
         #       in a non-optimal solution??
         #
-        #       gps_x       = self.gps_reading[0]
-        #       gps_y       = self.gps_reading[1]
-        #       gps_heading = self.gps_reading[2]
-
+        gps_x       = self.gps_reading[0]
+        gps_y       = self.gps_reading[1]
+        gps_heading = self.gps_reading[2]
         
-        raise NotImplementedError("implement this!!!")
+        weights = np.array([particle.weight for particle in self.particles])
+        weight_sum = np.cumsum(weights)
+
+        for i in range(self.num_particles):
+            newWeight = np.random.rand()
+            index = np.argmax(newWeight > weight_sum)
+            x, y, heading = self.particles[i].state
+            newParticle = Particle(
+                x,
+                y,
+                self.particles[i].maze,
+                heading=heading,
+                weight=1.0 / self.num_particles,
+                sensor_limit=self.particles[i].sensor_limit,
+                noisy=True,
+                gps_x_std=4,
+                gps_y_std=4,
+                gps_heading_std=4,
+                gps_update=0.5
+            )
+        # raise NotImplementedError("implement this!!!")
 
 
         #### END ####
@@ -132,9 +178,16 @@ class ParticleFilter:
         # 
         # You can use an ODE function or the vehicle_dynamics function
         # provided at the top of this file.
+        for particle in self.particles:
+            particle_info = particle.state
+            v,delta = self.control[-1]
+
+            offset = vehicle_dynamics(0, particle_info, v, delta)
+            print(offset)
+            particle.try_move(offset, particle.maze)
 
 
-        raise NotImplementedError("implement this!!!")
+        #raise NotImplementedError("implement this!!!")
     
 
         #### END ####
@@ -169,8 +222,10 @@ class ParticleFilter:
             # 3. resample particles
             #
             # Hint: use class helper functions
+            self.particleMotionModel()
+            self.updateWeight(lidar_reading)
+            self.resampleParticle()
             
-
 
 
 
@@ -180,7 +235,9 @@ class ParticleFilter:
                 #### TODO ####
                 # Re-render world, make sure to clear previous objects first!
 
-
+                self.world.clear_objects()
+                self.world.show_particles(self.particles, show_frequency=show_frequency)
+                self.world.show_robot(self.bob)
 
 
 
