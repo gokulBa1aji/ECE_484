@@ -258,7 +258,7 @@ class Maze:
         front_left = 0
         dx = np.cos(orientation + np.pi/4) * 1 - np.sin(orientation + np.pi/4) * 0
         dy = np.sin(orientation + np.pi/4) * 1 + np.cos(orientation + np.pi/4) * 0
-        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and rear < sensor_limit:
+        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and front_left < sensor_limit:
             pos_x = pos_x + dx
             pos_y = pos_y + dy
             front_left += 1
@@ -268,7 +268,7 @@ class Maze:
         front_right = 0
         dx = np.cos(orientation - np.pi/4) * 1 - np.sin(orientation - np.pi/4) * 0
         dy = np.sin(orientation - np.pi/4) * 1 + np.cos(orientation - np.pi/4) * 0
-        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and rear < sensor_limit:
+        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and front_right < sensor_limit:
             pos_x = pos_x + dx
             pos_y = pos_y + dy
             front_right += 1
@@ -278,7 +278,7 @@ class Maze:
         rear_left = 0
         dx = np.cos(orientation + 3 * np.pi/4) * 1 - np.sin(orientation + 3 * np.pi/4) * 0
         dy = np.sin(orientation + 3 * np.pi/4) * 1 + np.cos(orientation + 3 *np.pi/4) * 0
-        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and rear < sensor_limit:
+        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and rear_left < sensor_limit:
             pos_x = pos_x + dx
             pos_y = pos_y + dy
             rear_left += 1
@@ -289,7 +289,7 @@ class Maze:
         rear_right = 0
         dx = np.cos(orientation- 3 * np.pi/4) * 1 - np.sin(orientation- 3 * np.pi/4) * 0
         dy = np.sin(orientation- 3 * np.pi/4) * 1 + np.cos(orientation- 3 *np.pi/4) * 0
-        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and rear < sensor_limit:
+        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and rear_right < sensor_limit:
             pos_x = pos_x + dx
             pos_y = pos_y + dy
             rear_right += 1
