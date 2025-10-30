@@ -87,7 +87,7 @@ class ParticleFilter:
         # Make sure that the sum of all particle weights adds up to 1
         # after updating the weights.
 
-        std_dev = 100.0 #needs to be tuned
+        std_dev = 1250.0 #needs to be tuned
 
         weights = []
 
@@ -156,33 +156,47 @@ class ParticleFilter:
             index = np.argmax(weight_sum > newWeight)
             x, y, heading = self.particles[index].state
 
-            if random.random() < 0.01:
-                newParticle = Particle(
-                    gps_x + np.random.normal(0, gps_x_std),
-                    gps_y + np.random.normal(0, gps_y_std),
-                    self.world,
-                    heading = (gps_heading + np.random.normal(0, gps_heading_std)),
-                    weight=1.0 / self.num_particles,
-                    sensor_limit=self.sensor_limit,
-                    noisy=False,
-                    gps_x_std=4,
-                    gps_y_std=4,
-                    gps_heading_std=4
-                )
-            else: 
-                newParticle = Particle(
-                    x,
-                    y,
-                    self.particles[index].maze,
-                    heading=heading,
-                    weight=1.0 / self.num_particles,
-                    sensor_limit=self.particles[index].sensor_limit,
-                    noisy=True,
-                    gps_x_std=4,
-                    gps_y_std=4,
-                    gps_heading_std=4,
-                    gps_update=0.5
-                )
+            # if random.random() < 0.01:
+            #     newParticle = Particle(
+            #         gps_x + np.random.normal(0, gps_x_std),
+            #         gps_y + np.random.normal(0, gps_y_std),
+            #         self.world,
+            #         heading = (gps_heading + np.random.normal(0, gps_heading_std)),
+            #         weight=1.0 / self.num_particles,
+            #         sensor_limit=self.sensor_limit,
+            #         noisy=False,
+            #         gps_x_std=4,
+            #         gps_y_std=4,
+            #         gps_heading_std=4
+            #     )
+            # else: 
+            #     newParticle = Particle(
+            #         x,
+            #         y,
+            #         self.particles[index].maze,
+            #         heading=heading,
+            #         weight=1.0 / self.num_particles,
+            #         sensor_limit=self.particles[index].sensor_limit,
+            #         noisy=True,
+            #         gps_x_std=4,
+            #         gps_y_std=4,
+            #         gps_heading_std=4,
+            #         gps_update=0.5
+            #     )
+
+            newParticle = Particle(
+                x,
+                y,
+                self.particles[index].maze,
+                heading=heading,
+                weight=1.0 / self.num_particles,
+                sensor_limit=self.particles[index].sensor_limit,
+                noisy=True,
+                gps_x_std=4,
+                gps_y_std=4,
+                gps_heading_std=4,
+                gps_update=0.5
+            )
             newParticle.fix_invalid_particles()
             new_particles.append(newParticle)
         # raise NotImplementedError("implement this!!!")
