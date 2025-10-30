@@ -87,8 +87,29 @@ class ParticleFilter:
         # Make sure that the sum of all particle weights adds up to 1
         # after updating the weights.
 
+        robot_lidar = np.array(lidar_readings)
+        sigma = 50.0
+        for p in self.particles:
+            particle_lidar = np.array(p.read_sensor())
+            diff = robot_lidar - particle_lidar
+            # Apply Gaussian kernel
+            # print(diff)
+            # print(diff ** 2)
+            # print("-" * 20)
+            squared_distance = np.sum(diff ** 2)
+            p.weight = np.exp(-squared_distance / (2 * sigma ** 2))
 
-        raise NotImplementedError("implement this!!!")
+        # Normalize weights
+        total_weight = sum(p.weight for p in self.particles)
+        if total_weight > 0:
+            for p in self.particles:
+                p.weight /= total_weight
+        else:
+            uniform_weight = 1.0 / self.num_particles
+            for p in self.particles:
+                p.weight = uniform_weight
+
+        # raise NotImplementedError("implement this!!!")
 
 
         #### END ####
@@ -111,13 +132,51 @@ class ParticleFilter:
         #       to make sure the particle filter does not converge / stay
         #       in a non-optimal solution??
         #
-        #       gps_x       = self.gps_reading[0]
-        #       gps_y       = self.gps_reading[1]
-        #       gps_heading = self.gps_reading[2]
+        gps_x       = self.gps_reading[0]
+        gps_y       = self.gps_reading[1]
+        gps_heading = self.gps_reading[2]
 
-        
-        raise NotImplementedError("implement this!!!")
+        weights = [p.weight for p in self.particles]
+        total_weight = np.cumsum(weights)
 
+        num_gps = 10
+
+        for i in range(self.num_particles - num_gps):
+            rand_weight = np.random.uniform(0,1)
+            idx = bisect.bisect_left(total_weight, rand_weight)
+            selected_particle = self.particles[idx]
+            new_particle = Particle(
+                x = selected_particle.x, 
+                y = selected_particle.y,
+                maze = self.world, 
+                heading = selected_particle.heading,
+                weight=rand_weight,
+                sensor_limit=self.sensor_limit,
+                noisy=True,
+                gps_x_std=4,
+                gps_y_std=4,
+                gps_heading_std=4,
+                gps_update=0.5
+            )
+            new_particles.append(new_particle)
+
+        # raise NotImplementedError("implement this!!!")
+
+        for i in range(num_gps):
+            new_particle = Particle(
+                x = gps_x, 
+                y = gps_y,
+                maze = self.world, 
+                heading = gps_heading,
+                weight=0.1,
+                sensor_limit=self.sensor_limit,
+                noisy=False,
+                gps_x_std=4,
+                gps_y_std=4,
+                gps_heading_std=4,
+                gps_update=0.5
+            )
+            new_particles.append(new_particle)
 
         #### END ####
 
@@ -132,9 +191,22 @@ class ParticleFilter:
         # 
         # You can use an ODE function or the vehicle_dynamics function
         # provided at the top of this file.
+        for particle in self.particles:
+            state = [particle.x, particle.y, particle.heading]
+            for (vr, delta) in self.control:
 
+                # ODE solver
+                solver = ode(vehicle_dynamics)
+                solver.set_integrator('dopri5') #RK
+                solver.set_initial_value(state, 0)
+                solver.set_f_params(vr, delta)
 
-        raise NotImplementedError("implement this!!!")
+                solver.integrate(solver.t + dt)
+                state = solver.y
+            particle.x, particle.y, particle.heading = state
+            particle.fix_invalid_particles()
+
+        # raise NotImplementedError("implement this!!!")
     
 
         #### END ####
@@ -170,9 +242,9 @@ class ParticleFilter:
             #
             # Hint: use class helper functions
             
-
-
-
+            self.particleMotionModel()
+            self.updateWeight(lidar_reading)
+            self.resampleParticle()
 
             #### END ####
 
@@ -180,9 +252,9 @@ class ParticleFilter:
                 #### TODO ####
                 # Re-render world, make sure to clear previous objects first!
 
-
-
-
+                self.world.clear_objects()
+                self.world.show_particles(self.particles,show_frequency=show_frequency)
+                self.world.show_robot(self.bob)
 
                 #### END ####
 
