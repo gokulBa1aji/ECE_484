@@ -188,7 +188,7 @@ class LidarProcessing:
             self.x_front_left = np.mean(x_points[indices])
             self.y_front_left = np.mean(y_points[indices])
 
-            filter_front_right = np.logical_and(x_points > 0.1, filter_right < -0.1)
+            filter_front_right = np.logical_and(x_points > 0.1, y_points < -0.1)
             filter_front_right = np.logical_and(filter_front_right, pixel_vals > 128)
             indices = np.argwhere(filter_front_right).flatten()
 
