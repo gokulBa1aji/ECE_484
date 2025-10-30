@@ -108,9 +108,12 @@ class ParticleFilter:
         
         total_weight = sum(weights)
 
-        normalized_weights = [w / total_weight for w in weights]
+        if total_weight == 0:
+            normalize_weights = [1.0 / self.num_particles] * self.num_particles
+        else: 
+            normalized_weights = [w / total_weight for w in weights]
 
-        for particle,w in zip(self.particles, weights):
+        for particle, w in zip(self.particles, normalized_weights):
             particle.weight = w
 
 
@@ -146,7 +149,7 @@ class ParticleFilter:
 
         for i in range(self.num_particles):
             newWeight = np.random.rand()
-            index = np.argmax(newWeight < weight_sum)
+            index = np.argmax(weight_sum > newWeight)
             x, y, heading = self.particles[index].state
             newParticle = Particle(
                 x,
