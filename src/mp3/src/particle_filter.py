@@ -87,7 +87,7 @@ class ParticleFilter:
         # Make sure that the sum of all particle weights adds up to 1
         # after updating the weights.
 
-        std_dev = 1.0 #needs to be tuned
+        std_dev = 50.0 #needs to be tuned
 
         weights = []
 
@@ -108,8 +108,7 @@ class ParticleFilter:
         
         total_weight = sum(weights)
 
-        for w in weights:
-            w = w/total_weight
+        normalized_weights = [w / total_weight for w in weights]
 
         for particle,w in zip(self.particles, weights):
             particle.weight = w
@@ -147,7 +146,7 @@ class ParticleFilter:
 
         for i in range(self.num_particles):
             newWeight = np.random.rand()
-            index = np.argmax(newWeight > weight_sum)
+            index = np.argmax(newWeight < weight_sum)
             x, y, heading = self.particles[index].state
             newParticle = Particle(
                 x,
@@ -184,9 +183,13 @@ class ParticleFilter:
             for v,delta in self.control:
                 particle_info = particle.state
 
-                offset = vehicle_dynamics(0, particle_info, v, delta)
-                scaledOffset = [val * dt for val in offset]
-                particle.try_move(scaledOffset, particle.maze)
+                dx, dy, dtheta = vehicle_dynamics(0, particle_info, v, delta)
+
+                particle.x += dx * dt
+                particle.y += dy * dt
+                particle.heading += dtheta * dt
+
+            particle.heading = particle.heading % (2 * np.pi)
             particle.fix_invalid_particles()
 
         #raise NotImplementedError("implement this!!!")
@@ -210,19 +213,15 @@ class ParticleFilter:
             lidar_reading, gps_reading = self.bob.read_sensor()
 
             # ensure at least one positive gps reading before running the filter
-            print("Checking gps")
             if gps_reading is not None:
                 self.gps_reading = gps_reading
             if self.gps_reading is None:
                 continue
-
-            print("GPS found")
             
             # if no control inputs have arrived, do nothing
             if len(self.control) == 0:
                 continue
 
-            print("Control found")
             #### TODO ####
             # 1. perform a particle motion step
             # 2. update weights based on measurements
