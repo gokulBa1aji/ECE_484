@@ -21,6 +21,8 @@ def vehicle_dynamics(t, vars, vr, delta):
     dtheta = delta
     return [dx,dy,dtheta]
 
+log_file = "log_q4_1500.txt"
+
 class ParticleFilter:
     def __init__(self, bob, world, num_particles, sensor_limit, x_start, y_start, node):
         self.num_particles = num_particles  # The number of particles for the particle filter
@@ -33,6 +35,8 @@ class ParticleFilter:
             x = np.random.uniform(0, world.width)
             y = np.random.uniform(0, world.height)
             particles.append(Particle(x=x, y=y, maze=world, sensor_limit=sensor_limit))
+        #for _ in range(num_particles):
+        #     particles.append(Particle(x = bob.x + 85, y = bob.y - 45, heading=bob.heading, maze = world, sensor_limit = sensor_limit))
 
         self.particles = particles          # Randomly assign particles at the begining
         self.bob = bob                      # The estimated robot state
@@ -87,35 +91,44 @@ class ParticleFilter:
         # Make sure that the sum of all particle weights adds up to 1
         # after updating the weights.
 
-        robot_lidar = np.array(lidar_readings)
-        sigma = 50.0
-        for p in self.particles:
-            particle_lidar = np.array(p.read_sensor())
-            diff = robot_lidar - particle_lidar
-            # Apply Gaussian kernel
-            # print(diff)
-            # print(diff ** 2)
-            # print("-" * 20)
-            squared_distance = np.sum(diff ** 2)
-            p.weight = np.exp(-squared_distance / (2 * sigma ** 2))
+        std_dev = 3000.0 #needs to be tuned (Was 1250)
 
-        # Normalize weights
-        total_weight = sum(p.weight for p in self.particles)
-        if total_weight > 0:
-            for p in self.particles:
-                p.weight /= total_weight
-        else:
-            uniform_weight = 1.0 / self.num_particles
-            for p in self.particles:
-                p.weight = uniform_weight
+        weights = []
 
-        # raise NotImplementedError("implement this!!!")
+        for particle in self.particles:
+            #get lidar readings - idk how to do this
+            particle_lidar = particle.read_sensor()
+
+            error = np.array(lidar_readings) - np.array(particle_lidar)
+
+            error = np.sum(error * error)
+
+            error = error / (2 * std_dev * std_dev)
+
+            weight = np.exp(-1 * error)
+
+            weights.append(weight)
+           
+        
+        total_weight = sum(weights)
+
+        if total_weight == 0:
+
+            normalized_weights = [1.0 / self.num_particles] * self.num_particles
+        else: 
+            normalized_weights = [w / total_weight for w in weights]
+
+        for particle, w in zip(self.particles, normalized_weights):
+            particle.weight = w
+
 
 
         #### END ####
 
     def resampleParticle(self):
         new_particles = []
+
+        
 
         #### TODO ####
         # Resample current particles to generate a new set of particles.
@@ -136,50 +149,66 @@ class ParticleFilter:
         gps_y       = self.gps_reading[1]
         gps_heading = self.gps_reading[2]
 
-        weights = [p.weight for p in self.particles]
-        total_weight = np.cumsum(weights)
+        gps_x_std = self.particles[0].gps_x_std
+        gps_y_std = self.particles[0].gps_y_std
+        gps_heading_std = self.particles[0].gps_heading_std
 
-        num_gps = 10
 
-        for i in range(self.num_particles - num_gps):
-            rand_weight = np.random.uniform(0,1)
-            idx = bisect.bisect_left(total_weight, rand_weight)
-            selected_particle = self.particles[idx]
-            new_particle = Particle(
-                x = selected_particle.x, 
-                y = selected_particle.y,
-                maze = self.world, 
-                heading = selected_particle.heading,
-                weight=rand_weight,
-                sensor_limit=self.sensor_limit,
-                noisy=True,
-                gps_x_std=4,
-                gps_y_std=4,
-                gps_heading_std=4,
-                gps_update=0.5
-            )
-            new_particles.append(new_particle)
+        weights = np.array([particle.weight for particle in self.particles])
+        weight_sum = np.cumsum(weights)
 
+        for i in range(self.num_particles):
+            newWeight = np.random.rand()
+            index = np.argmax(weight_sum > newWeight)
+            x, y, heading = self.particles[index].state
+
+            if np.random.uniform() < 0.1:
+                newParticle = Particle(
+                    gps_x,#+ np.random.normal(0, gps_x_std),
+                    gps_y, # + np.random.normal(0, gps_y_std),
+                    self.world,
+                    heading = gps_heading,#(gps_heading + np.random.normal(0, gps_heading_std)),
+                    weight=1.0 / self.num_particles,
+                    sensor_limit=self.sensor_limit,
+                    noisy=True,
+                    gps_x_std=4,
+                    gps_y_std=4,
+                    gps_heading_std=4
+                )
+            else: 
+                newParticle = Particle(
+                    x,
+                    y,
+                    self.particles[index].maze,
+                    heading=heading,
+                    weight=1.0 / self.num_particles,
+                    sensor_limit=self.particles[index].sensor_limit,
+                    noisy=True,
+                    gps_x_std=4,
+                    gps_y_std=4,
+                    gps_heading_std=4,
+                    gps_update=0.5
+                )
+
+            # newParticle = Particle(
+            #     x,
+            #     y,
+            #     self.particles[index].maze,
+            #     heading=heading,
+            #     weight=1.0 / self.num_particles,
+            #     sensor_limit=self.particles[index].sensor_limit,
+            #     noisy=True,
+            #     gps_x_std=gps_x_std,   # defaults 4
+            #     gps_y_std=gps_y_std,            # 4
+            #     gps_heading_std=gps_heading_std,# 4
+            #     gps_update=0.5
+            # )
+            newParticle.fix_invalid_particles()
+            new_particles.append(newParticle)
         # raise NotImplementedError("implement this!!!")
 
-        for i in range(num_gps):
-            new_particle = Particle(
-                x = gps_x, 
-                y = gps_y,
-                maze = self.world, 
-                heading = gps_heading,
-                weight=0.1,
-                sensor_limit=self.sensor_limit,
-                noisy=False,
-                gps_x_std=4,
-                gps_y_std=4,
-                gps_heading_std=4,
-                gps_update=0.5
-            )
-            new_particles.append(new_particle)
 
         #### END ####
-
         self.particles = new_particles
 
     def particleMotionModel(self):
@@ -192,26 +221,26 @@ class ParticleFilter:
         # You can use an ODE function or the vehicle_dynamics function
         # provided at the top of this file.
         for particle in self.particles:
-            state = [particle.x, particle.y, particle.heading]
-            for (vr, delta) in self.control:
+            # v,delta = self.control[-1]
+            for v,delta in self.control:
+                particle_info = particle.state
 
-                # ODE solver
-                solver = ode(vehicle_dynamics)
-                solver.set_integrator('dopri5') #RK
-                solver.set_initial_value(state, 0)
-                solver.set_f_params(vr, delta)
+                dx, dy, dtheta = vehicle_dynamics(0, particle_info, v, delta)
 
-                solver.integrate(solver.t + dt)
-                state = solver.y
-            particle.x, particle.y, particle.heading = state
+                particle.x += dx * dt
+                particle.y += dy * dt
+                particle.heading += dtheta * dt
+
+            particle.heading = particle.heading % (2 * np.pi)
             particle.fix_invalid_particles()
 
-        # raise NotImplementedError("implement this!!!")
+        #raise NotImplementedError("implement this!!!")
     
 
         #### END ####
 
         self.control = []
+
 
     def runFilter(self, show_frequency):
         """
@@ -222,6 +251,7 @@ class ParticleFilter:
         self.world.show_particles(self.particles, show_frequency=show_frequency)
         self.world.show_robot(self.bob)
         count = 0 
+        errors =[]
         while rclpy.ok():
             lidar_reading, gps_reading = self.bob.read_sensor()
 
@@ -230,7 +260,7 @@ class ParticleFilter:
                 self.gps_reading = gps_reading
             if self.gps_reading is None:
                 continue
-
+            
             # if no control inputs have arrived, do nothing
             if len(self.control) == 0:
                 continue
@@ -241,10 +271,12 @@ class ParticleFilter:
             # 3. resample particles
             #
             # Hint: use class helper functions
-            
+            self.resampleParticle()
             self.particleMotionModel()
             self.updateWeight(lidar_reading)
-            self.resampleParticle()
+            # RESAMPLE
+
+
 
             #### END ####
 
@@ -253,12 +285,30 @@ class ParticleFilter:
                 # Re-render world, make sure to clear previous objects first!
 
                 self.world.clear_objects()
-                self.world.show_particles(self.particles,show_frequency=show_frequency)
+                self.world.show_particles(self.particles, show_frequency=show_frequency)
                 self.world.show_robot(self.bob)
+
+
 
                 #### END ####
 
                 estimated_location = self.world.show_estimated_location(self.particles)
                 err = math.sqrt((estimated_location[0] - self.bob.x) ** 2 + (estimated_location[1] - self.bob.y) ** 2)
-                print(f":: step {count} :: err {err:.3f}")
+                heading_err = abs(self.bob.heading - estimated_location[2])
+                if (heading_err > math.pi):
+                    heading_err = 2 * math.pi - heading_err
+                errors.append((count, err, heading_err))
+                if count == 1000:
+                    with open(log_file, 'a') as f:
+                        run_err_count = 0
+                        for (cnt,err1,err2) in errors:
+                            if err1 < 10:
+                                run_err_count += 1
+                            f.write(f"{cnt} {err1:.3f} {err2:.3f}\n")
+                        print("Run Accuracy: ", run_err_count/len(errors))
+                        if run_err_count >= 750:
+                            print("Successful RUN")
+                    print("Wrote log file")
+                if (err > 10):
+                    print(f":: step {count} :: err {err:.3f}")
             count += 1
