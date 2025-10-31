@@ -306,6 +306,6 @@ class ParticleFilter:
                         if run_err_count >= 750:
                             print("Successful RUN")
                     print("Wrote log file")
-                if (err > 10)
+                if (err > 10):
                     print(f":: step {count} :: err {err:.3f}")
             count += 1
