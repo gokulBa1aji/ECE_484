@@ -91,7 +91,7 @@ class ParticleFilter:
         # Make sure that the sum of all particle weights adds up to 1
         # after updating the weights.
 
-        std_dev = 600.0 #needs to be tuned (Was 1250)
+        std_dev = 3000.0 #needs to be tuned (Was 1250)
 
         weights = []
 
@@ -162,7 +162,7 @@ class ParticleFilter:
             index = np.argmax(weight_sum > newWeight)
             x, y, heading = self.particles[index].state
 
-            if random.random() < 0.3:
+            if np.random.uniform() < 0.1:
                 newParticle = Particle(
                     gps_x,#+ np.random.normal(0, gps_x_std),
                     gps_y, # + np.random.normal(0, gps_y_std),
@@ -271,10 +271,10 @@ class ParticleFilter:
             # 3. resample particles
             #
             # Hint: use class helper functions
+            self.resampleParticle()
             self.particleMotionModel()
             self.updateWeight(lidar_reading)
-            self.resampleParticle()
-            
+            # RESAMPLE
 
 
 
@@ -298,13 +298,14 @@ class ParticleFilter:
                 if count == 1000:
                     with open(log_file, 'a') as f:
                         run_err_count = 0
-                        for (count,err1) in errors:
-                            if err < 10:
+                        for (cnt,err1) in errors:
+                            if err1 < 10:
                                 run_err_count += 1
-                            f.write(f"{count} {err1:.3f}\n")
-                        print("Run Accuracy: ", run_err_count/1000.0)
+                            f.write(f"{cnt} {err1:.3f}\n")
+                        print("Run Accuracy: ", run_err_count/len(errors))
                         if run_err_count >= 750:
                             print("Successful RUN")
                     print("Wrote log file")
-                print(f":: step {count} :: err {err:.3f}")
+                if (err > 10)
+                    print(f":: step {count} :: err {err:.3f}")
             count += 1
